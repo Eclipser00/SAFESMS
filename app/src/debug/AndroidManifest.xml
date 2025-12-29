@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <application>
+        <!-- 
+            Este manifest solo se combina en builds DEBUG.
+            Actualmente no hay componentes específicos de debug.
+            
+            Para testing de SMS, usa los scripts send-real-sms.ps1 o send-real-sms.sh
+            que insertan SMS reales en el sistema Android.
+        -->
+    </application>
+    
+</manifest>
+

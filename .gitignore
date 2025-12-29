@@ -1,0 +1,53 @@
+# Android / Gradle
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration (do not commit)
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Kotlin
+.kotlin/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Keystores / signing
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Google Services (optional: keep if you intentionally commit it)
+google-services.json
+
+# Native build artifacts
+.cxx/
+externalNativeBuild/
+cmake-build-*/
+
+# Lint / analysis
+lint-results*.html
+lint-results*.xml
+lint-report*.html
+lint-report*.xml
+
+# Outputs
+*.apk
+*.ap_
+*.aab
+
+# Tooling / editor folders
+.cursor/

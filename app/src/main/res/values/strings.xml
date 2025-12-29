@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SafeSMS</string>
+    
+    <!-- Navigation -->
+    <string name="nav_inbox">Bandeja de Entrada</string>
+    <string name="nav_quarantine">Cuarentena</string>
+    <string name="nav_settings">Ajustes</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_inbox">Mensajes de Bandeja</string>
+    <string name="notification_channel_inbox_description">Notificaciones para mensajes de contactos guardados</string>
+    <string name="notification_channel_quarantine">Mensajes en Cuarentena</string>
+    <string name="notification_channel_quarantine_description">Notificaciones para mensajes de remitentes desconocidos</string>
+    <string name="notification_quarantine_title">Nuevo mensaje en Cuarentena</string>
+    <string name="notification_quarantine_message">Has recibido un mensaje de un remitente desconocido</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">Bienvenido a SafeSMS</string>
+    <string name="onboarding_description">Protección inteligente contra phishing mediante advertencias contextuales</string>
+    <string name="onboarding_continue">Continuar</string>
+    
+    <!-- Permissions -->
+    <string name="permissions_title">Permisos necesarios</string>
+    <string name="permissions_sms_description">Necesitamos acceso a SMS para leer y enviar mensajes</string>
+    <string name="permissions_contacts_description">Necesitamos acceso a contactos para clasificar mensajes</string>
+    <string name="permissions_default_sms">SafeSMS debe ser tu aplicación de SMS por defecto</string>
+    <string name="permissions_grant">Conceder permisos</string>
+    <string name="permissions_importing">Importando mensajes históricos...</string>
+    
+    <!-- Chat List -->
+    <string name="chat_list_empty_inbox">No hay mensajes en la bandeja de entrada</string>
+    <string name="chat_list_empty_quarantine">No hay mensajes en cuarentena</string>
+    
+    <!-- Chat Detail -->
+    <string name="chat_detail_send">Enviar</string>
+    <string name="chat_detail_type_message">Escribe un mensaje...</string>
+    <string name="chat_detail_block">Bloquear contacto</string>
+    <string name="chat_detail_unblock">Desbloquear contacto</string>
+    
+    <!-- Quarantine Warning -->
+    <string name="quarantine_warning_title">Advertencia de Seguridad</string>
+    <string name="quarantine_warning_message">Estás a punto de acceder a un chat de un remitente desconocido. Este mensaje puede contener enlaces maliciosos o ser parte de un intento de phishing.</string>
+    <string name="quarantine_warning_enter">Entrar igualmente</string>
+    <string name="quarantine_warning_back">Volver</string>
+    <string name="quarantine_warning_risk_factors">Factores de riesgo detectados:</string>
+    
+    <!-- Link Warning -->
+    <string name="link_warning_title">Advertencia de Enlace</string>
+    <string name="link_warning_message">Estás a punto de abrir un enlace externo. Los enlaces en mensajes pueden ser peligrosos.</string>
+    <string name="link_warning_open">Abrir enlace</string>
+    <string name="link_warning_cancel">Cancelar</string>
+    <string name="link_warning_domain">Dominio: %1$s</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_countdown">Segundos de cuenta atrás</string>
+    <string name="settings_countdown_description">Tiempo de espera antes de acciones críticas (3-8 segundos)</string>
+    <string name="settings_quarantine_notifications">Notificaciones de Cuarentena</string>
+    <string name="settings_quarantine_notifications_description">Recibir notificaciones para mensajes en cuarentena</string>
+    <string name="settings_blocked_senders">Remitentes bloqueados</string>
+    <string name="settings_no_blocked_senders">No hay remitentes bloqueados</string>
+    <string name="settings_unblock">Desbloquear</string>
+    
+    <!-- Risk Factors -->
+    <string name="risk_factor_links">Contiene enlaces</string>
+    <string name="risk_factor_alphanumeric">Remitente alfanumérico</string>
+    <string name="risk_factor_short_code">Número corto</string>
+    <string name="risk_factor_unknown">Remitente desconocido</string>
+    
+    <!-- Errors -->
+    <string name="error_generic">Ha ocurrido un error</string>
+    <string name="error_permissions">Se requieren permisos para continuar</string>
+    <string name="error_database">Error al acceder a la base de datos</string>
+    <string name="error_send_message">Error al enviar mensaje</string>
+    <string name="error_load_messages">Error al cargar mensajes</string>
+</resources>
