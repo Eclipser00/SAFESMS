@@ -1,11 +1,27 @@
 package com.safesms.presentation.ui.components
 
 import android.util.Patterns
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -13,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -26,6 +43,7 @@ import com.safesms.presentation.ui.theme.ReceivedMessageBackground
 import com.safesms.presentation.ui.theme.ReceivedMessageText
 import com.safesms.presentation.ui.theme.SentMessageBackground
 import com.safesms.presentation.ui.theme.SentMessageText
+import com.safesms.presentation.ui.theme.MutedText
 import com.safesms.presentation.util.DateFormatter
 import java.util.regex.Pattern
 
@@ -33,76 +51,142 @@ import java.util.regex.Pattern
  * Burbuja de mensaje con diferenciacion segura/riesgo y enlaces destacados.
  */
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun MessageBubble(
     message: Message,
     onLinkClicked: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    selectionMode: Boolean = false,
+    onClick: () -> Unit = {},
+    onLongPress: () -> Unit = {}
 ) {
     val isReceived = message.isReceived
+    val baseBubbleColor = if (isReceived) ReceivedMessageBackground else SentMessageBackground
+    val bubbleColor = if (isSelected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+    } else {
+        baseBubbleColor
+    }
     val annotatedText = detectAndStyleLinks(message.body)
     val bubbleShape = if (isReceived) {
         RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp, bottomEnd = 14.dp, bottomStart = 6.dp)
     } else {
         RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp, bottomStart = 14.dp, bottomEnd = 6.dp)
     }
+    val borderStroke = if (isSelected) {
+        BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f))
+    } else {
+        null
+    }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        horizontalArrangement = if (isReceived) Arrangement.Start else Arrangement.End
+        horizontalArrangement = if (isReceived) Arrangement.Start else Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Surface(
-            shape = bubbleShape,
-            color = if (isReceived) ReceivedMessageBackground else SentMessageBackground,
-            tonalElevation = if (isReceived) 0.dp else 2.dp,
-            shadowElevation = if (isReceived) 1.dp else 4.dp,
-            modifier = Modifier.widthIn(max = 320.dp)
+        if (selectionMode && isReceived) {
+            SelectionIndicator(isSelected = isSelected)
+            Spacer(modifier = Modifier.width(6.dp))
+        }
+
+        Box(
+            modifier = Modifier.combinedClickable(
+                onClick = {
+                    if (selectionMode) {
+                        onClick()
+                    }
+                },
+                onLongClick = onLongPress
+            )
         ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+            Surface(
+                shape = bubbleShape,
+                color = bubbleColor,
+                tonalElevation = if (isReceived) 0.dp else 2.dp,
+                shadowElevation = if (isReceived) 1.dp else 4.dp,
+                border = borderStroke,
+                modifier = Modifier.widthIn(max = 320.dp)
             ) {
-                ClickableText(
-                    text = annotatedText,
-                    onClick = { offset ->
-                        annotatedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                            .firstOrNull()
-                            ?.let { annotation -> onLinkClicked(annotation.item) }
-                    },
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = if (isReceived) ReceivedMessageText else SentMessageText
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
-                    Text(
-                        text = DateFormatter.formatMessageTimestamp(message.timestamp),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = if (isReceived) {
-                                ReceivedMessageText.copy(alpha = 0.65f)
+                    ClickableText(
+                        text = annotatedText,
+                        onClick = { offset ->
+                            if (selectionMode) {
+                                onClick()
                             } else {
-                                SentMessageText.copy(alpha = 0.85f)
+                                annotatedText.getStringAnnotations(tag = "URL", start = offset, end = offset)
+                                    .firstOrNull()
+                                    ?.let { annotation -> onLinkClicked(annotation.item) }
                             }
+                        },
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = if (isReceived) ReceivedMessageText else SentMessageText
                         )
                     )
 
-                    if (!isReceived) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = if (message.isRead) "Leido" else "Enviado",
-                            tint = if (message.isRead) SentMessageText else SentMessageText.copy(alpha = 0.65f)
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = DateFormatter.formatMessageTimestamp(message.timestamp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = if (isReceived) {
+                                    ReceivedMessageText.copy(alpha = 0.65f)
+                                } else {
+                                    SentMessageText.copy(alpha = 0.85f)
+                                }
+                            )
                         )
+
+                        if (!isReceived) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = if (message.isRead) "Leido" else "Enviado",
+                                tint = if (message.isRead) SentMessageText else SentMessageText.copy(alpha = 0.65f)
+                            )
+                        }
                     }
                 }
             }
         }
+
+        if (selectionMode && !isReceived) {
+            Spacer(modifier = Modifier.width(6.dp))
+            SelectionIndicator(isSelected = isSelected)
+        }
+    }
+}
+
+@Composable
+private fun SelectionIndicator(isSelected: Boolean) {
+    if (isSelected) {
+        Icon(
+            imageVector = Icons.Outlined.CheckCircle,
+            contentDescription = "Seleccionado",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(22.dp)
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .border(
+                    width = 1.5.dp,
+                    color = MutedText,
+                    shape = CircleShape
+                )
+        )
     }
 }
 

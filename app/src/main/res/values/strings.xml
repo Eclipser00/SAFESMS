@@ -35,8 +35,8 @@
     <!-- Chat Detail -->
     <string name="chat_detail_send">Enviar</string>
     <string name="chat_detail_type_message">Escribe un mensaje...</string>
-    <string name="chat_detail_block">Bloquear contacto</string>
-    <string name="chat_detail_unblock">Desbloquear contacto</string>
+    <string name="chat_detail_block">Bloquear notificaciones</string>
+    <string name="chat_detail_unblock">Desbloquear notificaciones</string>
     
     <!-- Quarantine Warning -->
     <string name="quarantine_warning_title">Advertencia de Seguridad</string>

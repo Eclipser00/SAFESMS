@@ -2,7 +2,8 @@ package com.safesms.presentation.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -45,6 +48,8 @@ import com.safesms.presentation.ui.theme.QuarantineRedDark
 import com.safesms.presentation.ui.theme.Surface
 import com.safesms.presentation.ui.theme.SurfaceMuted
 import com.safesms.presentation.ui.theme.SurfaceStroke
+import com.safesms.presentation.ui.theme.BlockedBackground
+import com.safesms.presentation.ui.theme.BlockedSurface
 import com.safesms.presentation.util.DateFormatter
 import com.safesms.presentation.util.PhoneNumberFormatter
 import com.safesms.util.AddressDisplayHelper
@@ -53,15 +58,19 @@ import com.safesms.util.AddressDisplayHelper
  * Item de chat con diferenciacion visual entre Inbox (seguro) y Cuarentena (riesgo).
  */
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun ChatListItem(
     chat: Chat,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    selectionMode: Boolean = false,
+    onLongPress: () -> Unit = {}
 ) {
     val isQuarantine = chat.chatType == ChatType.QUARANTINE
     val shape = RoundedCornerShape(14.dp)
     val containerBrush = when {
-        chat.isBlocked -> Brush.verticalGradient(listOf(SurfaceMuted, SurfaceMuted))
+        chat.isBlocked -> Brush.verticalGradient(listOf(BlockedSurface, BlockedBackground))
         isQuarantine -> Brush.verticalGradient(listOf(Surface, SurfaceMuted))
         else -> Brush.verticalGradient(listOf(Surface, SurfaceMuted))
     }
@@ -71,6 +80,8 @@ fun ChatListItem(
         else -> MaterialTheme.colorScheme.onSurface
     }
     val accentColor = if (isQuarantine) QuarantineRed else InboxGreen
+    val selectionOutline = if (isSelected) MaterialTheme.colorScheme.primary else QuarantineRed.copy(alpha = 0.35f)
+    val itemAlpha = if (selectionMode && !isSelected) 0.8f else 1f
 
     val cleanAddress = AddressDisplayHelper.cleanAddressForDisplay(chat.address)
     val displayName = chat.contactName ?: PhoneNumberFormatter.formatPhoneNumber(cleanAddress)
@@ -93,13 +104,21 @@ fun ChatListItem(
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .shadow(elevation = if (isQuarantine) 10.dp else 4.dp, shape = shape, clip = false)
             .clip(shape)
+            .alpha(itemAlpha)
             .background(containerBrush)
             .border(
-                width = if (isQuarantine && !chat.isBlocked) 1.dp else 0.dp,
-                color = QuarantineRed.copy(alpha = 0.35f),
+                width = when {
+                    isSelected -> 2.dp
+                    isQuarantine && !chat.isBlocked -> 1.dp
+                    else -> 0.dp
+                },
+                color = selectionOutline,
                 shape = shape
             )
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            )
             .semantics {
                 this.contentDescription = contentDescription
             }
@@ -118,14 +137,22 @@ fun ChatListItem(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = displayName.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (chat.isBlocked) MutedText else accentColor
-                    )
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Outlined.Check,
+                            contentDescription = "Seleccionado",
+                            tint = accentColor
+                        )
+                    } else {
+                        Text(
+                            text = displayName.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = if (chat.isBlocked) MutedText else accentColor
+                        )
+                    }
 
-                    if (isQuarantine || chat.isBlocked) {
+                    if (!isSelected && (isQuarantine || chat.isBlocked)) {
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)

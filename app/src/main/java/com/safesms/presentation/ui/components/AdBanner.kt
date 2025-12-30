@@ -47,14 +47,14 @@ fun AdBanner(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(100.dp)
             )
         } else {
             AndroidView(
                 factory = { ctx ->
                     AdView(ctx).apply {
                         adUnitId = Constants.ADMOB_BANNER_ID
-                        setAdSize(AdSize.BANNER)
+                        setAdSize(AdSize.LARGE_BANNER)
 
                         adListener = object : com.google.android.gms.ads.AdListener() {
                             override fun onAdLoaded() {
@@ -73,8 +73,8 @@ fun AdBanner(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                update = { }
+                    .height(100.dp),
+                update = {}
             )
         }
     }

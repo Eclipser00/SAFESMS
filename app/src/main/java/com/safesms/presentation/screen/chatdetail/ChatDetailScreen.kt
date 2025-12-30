@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
@@ -23,8 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
 import com.safesms.presentation.ui.components.MessageBubble
 import com.safesms.presentation.ui.theme.Background
 import com.safesms.presentation.ui.theme.HeaderDark
@@ -32,8 +36,12 @@ import com.safesms.presentation.ui.theme.HeaderDarkEnd
 import com.safesms.presentation.ui.theme.InboxGreen
 import com.safesms.presentation.ui.theme.Surface as SurfaceColor
 import com.safesms.presentation.ui.theme.SurfaceStroke
+import com.safesms.presentation.ui.theme.BlockedBackground
+import com.safesms.presentation.ui.theme.BlockedSurface
 import com.safesms.presentation.util.PhoneNumberFormatter
 import com.safesms.util.AddressDisplayHelper
+import androidx.compose.ui.res.stringResource
+import com.safesms.R
 
 /**
  * Pantalla de conversacion individual.
@@ -52,68 +60,92 @@ fun ChatDetailScreen(
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val isSending by viewModel.isSending.collectAsStateWithLifecycle()
     val error by viewModel.error.collectAsStateWithLifecycle()
+    val selectedMessageIds by viewModel.selectedMessages.collectAsStateWithLifecycle()
+    val isSelectionMode = selectedMessageIds.isNotEmpty()
+
+    if (isSelectionMode) {
+        BackHandler { viewModel.clearSelection() }
+    }
 
     val cleanAddress = chat?.address?.let { AddressDisplayHelper.cleanAddressForDisplay(it) } ?: ""
     val displayName = chat?.contactName ?: PhoneNumberFormatter.formatPhoneNumber(cleanAddress)
+    val isBlockedChat = chat?.isBlocked == true
 
     Scaffold(
         containerColor = Background,
         topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(HeaderDark, HeaderDarkEnd)))
-                    .padding(horizontal = 12.dp, vertical = 14.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+            if (isSelectionMode) {
+                MessageSelectionTopBar(
+                    count = selectedMessageIds.size,
+                    onClose = { viewModel.clearSelection() },
+                    onDelete = { viewModel.deleteSelectedMessages() }
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.verticalGradient(listOf(HeaderDark, HeaderDarkEnd)))
+                        .padding(horizontal = 12.dp, vertical = 14.dp)
                 ) {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Color.White
-                        )
-                    }
-
-                    Text(
-                        text = displayName,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 12.dp),
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-
-                    var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Opciones",
-                            tint = Color.White
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        chat?.let { currentChat ->
-                            DropdownMenuItem(
-                                text = {
-                                    Text(if (currentChat.isBlocked) "Desbloquear contacto" else "Bloquear contacto")
-                                },
-                                onClick = {
-                                    if (currentChat.isBlocked) {
-                                        viewModel.unblockSender()
-                                    } else {
-                                        viewModel.blockSender()
-                                    }
-                                    showMenu = false
-                                }
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = Color.White
                             )
+                        }
+
+                        Text(
+                            text = displayName,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 12.dp),
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+
+                        var showMenu by remember { mutableStateOf(false) }
+                        Box(modifier = Modifier.wrapContentSize(Alignment.TopEnd)) {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Opciones",
+                                    tint = Color.White
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false },
+                                offset = DpOffset(x = 12.dp, y = 0.dp)
+                            ) {
+                                chat?.let { currentChat ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (currentChat.isBlocked) {
+                                                    stringResource(R.string.chat_detail_unblock)
+                                                } else {
+                                                    stringResource(R.string.chat_detail_block)
+                                                }
+                                            )
+                                        },
+                                        onClick = {
+                                            if (currentChat.isBlocked) {
+                                                viewModel.unblockSender()
+                                            } else {
+                                                viewModel.blockSender()
+                                            }
+                                            showMenu = false
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -123,7 +155,7 @@ fun ChatDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF6F7FA))
+                .background(if (isBlockedChat) BlockedBackground else Color(0xFFF6F7FA))
                 .padding(paddingValues)
         ) {
             Surface(
@@ -132,7 +164,7 @@ fun ChatDetailScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 shape = RoundedCornerShape(18.dp),
-                color = SurfaceColor,
+                color = if (isBlockedChat) BlockedSurface else SurfaceColor,
                 shadowElevation = 6.dp,
                 tonalElevation = 2.dp,
                 border = BorderStroke(1.dp, SurfaceStroke)
@@ -156,7 +188,11 @@ fun ChatDetailScreen(
                         ) { message ->
                             MessageBubble(
                                 message = message,
-                                onLinkClicked = onLinkClicked
+                                onLinkClicked = onLinkClicked,
+                                isSelected = selectedMessageIds.contains(message.id),
+                                selectionMode = isSelectionMode,
+                                onClick = { viewModel.toggleMessageSelection(message.id) },
+                                onLongPress = { viewModel.toggleMessageSelection(message.id) }
                             )
                         }
                     }
@@ -172,7 +208,7 @@ fun ChatDetailScreen(
                 shape = RoundedCornerShape(16.dp),
                 shadowElevation = 10.dp,
                 tonalElevation = 2.dp,
-                color = SurfaceColor
+                color = if (isBlockedChat) BlockedSurface else SurfaceColor
             ) {
                 Row(
                     modifier = Modifier
@@ -237,6 +273,50 @@ fun ChatDetailScreen(
                 ) {
                     Text(it)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessageSelectionTopBar(
+    count: Int,
+    onClose: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(HeaderDark, HeaderDarkEnd)))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Salir de selección",
+                    tint = Color.White
+                )
+            }
+
+            Text(
+                text = count.toString(),
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar mensajes seleccionados",
+                    tint = Color.White
+                )
             }
         }
     }

@@ -10,6 +10,7 @@ data class ChatListState(
     val inboxChats: List<Chat> = emptyList(),
     val quarantineChats: List<Chat> = emptyList(),
     val selectedTab: ChatType = ChatType.INBOX,
+    val selectedChatIds: Set<Long> = emptySet(),
     val isLoading: Boolean = false,
     val error: String? = null
 ) {
@@ -18,5 +19,10 @@ data class ChatListState(
             ChatType.INBOX -> inboxChats
             ChatType.QUARANTINE -> quarantineChats
         }
-}
 
+    val isSelectionMode: Boolean
+        get() = selectedChatIds.isNotEmpty()
+
+    val selectionCount: Int
+        get() = selectedChatIds.size
+}

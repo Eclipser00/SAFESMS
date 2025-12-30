@@ -5,6 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
 import com.safesms.domain.model.ChatType
 import com.safesms.presentation.ui.components.AdBanner
 import com.safesms.presentation.ui.components.ChatListItem
@@ -61,50 +66,66 @@ fun ChatListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isQuarantine = uiState.selectedTab == ChatType.QUARANTINE
+    val isSelectionMode = uiState.isSelectionMode
     val backgroundBrush = if (isQuarantine) {
         Brush.verticalGradient(listOf(DangerBackgroundTop, DangerBackgroundBottom))
     } else {
         Brush.verticalGradient(listOf(Background, Background.copy(alpha = 0.85f)))
     }
 
+    if (isSelectionMode) {
+        BackHandler { viewModel.clearSelection() }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Brush.verticalGradient(listOf(HeaderDark, HeaderDarkEnd)))
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-            ) {
-                androidx.compose.foundation.layout.Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+            if (isSelectionMode) {
+                SelectionTopBar(
+                    count = uiState.selectionCount,
+                    onClose = { viewModel.clearSelection() },
+                    onDelete = { viewModel.deleteSelectedChats() }
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Brush.verticalGradient(listOf(HeaderDark, HeaderDarkEnd)))
+                        .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = null,
-                        tint = Color.White
-                    )
-
-                    Text(
-                        text = "SAFE SMS",
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = 12.dp),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    IconButton(onClick = onSettingsClick) {
+                    androidx.compose.foundation.layout.Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Ajustes",
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = null,
                             tint = Color.White
                         )
+
+                        Text(
+                            text = "SAFE SMS",
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 12.dp),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+
+                        IconButton(onClick = onSettingsClick) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Ajustes",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
+        },
+        bottomBar = {
+            AdBanner(modifier = Modifier.fillMaxWidth())
         }
     ) { padding ->
         Box(
@@ -190,12 +211,17 @@ fun ChatListScreen(
                                 ) { chat ->
                                     ChatListItem(
                                         chat = chat,
-                                        onClick = { onChatClick(chat.threadId, chat.chatType) }
+                                        onClick = {
+                                            if (isSelectionMode) {
+                                                viewModel.toggleChatSelection(chat.threadId)
+                                            } else {
+                                                onChatClick(chat.threadId, chat.chatType)
+                                            }
+                                        },
+                                        onLongPress = { viewModel.toggleChatSelection(chat.threadId) },
+                                        isSelected = uiState.selectedChatIds.contains(chat.threadId),
+                                        selectionMode = isSelectionMode
                                     )
-                                }
-
-                                item {
-                                    AdBanner()
                                 }
                             }
                         }
@@ -225,6 +251,50 @@ fun ChatListScreen(
                 ) {
                     Text(error)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectionTopBar(
+    count: Int,
+    onClose: () -> Unit,
+    onDelete: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(HeaderDark, HeaderDarkEnd)))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Salir de selección",
+                    tint = Color.White
+                )
+            }
+
+            Text(
+                text = count.toString(),
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Eliminar chats seleccionados",
+                    tint = Color.White
+                )
             }
         }
     }
